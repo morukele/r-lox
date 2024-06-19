@@ -1,5 +1,5 @@
-use std::{env, process};
 pub use lox;
+use std::{env, process};
 
 fn main() {
     let args: Vec<String> = env::args().collect();
