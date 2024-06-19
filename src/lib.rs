@@ -1,4 +1,3 @@
-pub mod lox;
 pub mod components;
 
 // public re-export
