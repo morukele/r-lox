@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use std::process;
+use crate::{Scanner, Token};
 
 pub fn main(args: Vec<String>) {
     if args.len() > 1 {
@@ -47,6 +48,12 @@ fn run_prompt() {
     }
 }
 
-fn run(line: &String) {
-    todo!()
+fn run(source: &String) {
+    let scanner = Scanner::new(source);
+    let tokens: Vec<Token> = scanner.scan_tokens();
+
+    // print the tokens to screen
+    for token in tokens {
+        println!("{token}")
+    }
 }
