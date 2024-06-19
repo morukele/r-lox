@@ -1,23 +1,21 @@
-use std::error::Error;
+use crate::Error::OpenFileError;
+use crate::{Error, Scanner};
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use std::process;
-use crate::{Scanner, Token};
 
 // main Lox class for running the code
 #[derive(Default)]
 pub struct Lox {
-    pub has_error: bool
+    pub has_error: bool,
 }
 
 impl Lox {
     pub fn new() -> Self {
-        Lox {
-            has_error: false
-        }
+        Lox { has_error: false }
     }
-    pub fn main(&self, args: Vec<String>) {
+    pub fn main(&mut self, args: Vec<String>) {
         if args.len() > 1 {
             println!("Usage: rlox [script]");
             process::exit(64);
@@ -28,18 +26,24 @@ impl Lox {
         }
     }
 
-    pub fn run_file(&self, file_path: &String) -> Result<(), dyn Error> {
+    pub fn run_file(&self, file_path: &String) -> Result<(), Error> {
         let file = File::open(Path::new(file_path));
         match file {
             Ok(file) => {
                 let mut buf_reader = BufReader::new(file);
+
+                // Indicate an error in the exit code.
+                if self.has_error {
+                    process::exit(65)
+                };
+
                 Ok(())
             }
-            Err(err) => Err(err),
+            Err(err) => Err(OpenFileError(err.to_string())),
         }
     }
 
-    pub fn run_prompt(&self) {
+    pub fn run_prompt(&mut self) {
         let mut input = String::new();
         loop {
             print!(">");
@@ -51,6 +55,7 @@ impl Lox {
                         break;
                     } else {
                         self.run(&input);
+                        self.has_error = false;
                     }
                 }
                 Err(e) => {
@@ -60,15 +65,22 @@ impl Lox {
         }
     }
 
-    pub fn run(&self, source: &String) {
-        let scanner = Scanner::new(source);
-        let tokens: Vec<Token> = scanner.scan_tokens();
+    pub fn run(&mut self, source: &str) {
+        let mut scanner = Scanner::new(source, self);
+        let tokens = scanner.scan_tokens();
 
         // print the tokens to screen
         for token in tokens {
             println!("{token}")
         }
     }
+
+    pub fn error(&mut self, line: i32, message: String) {
+        self.report(line, "", message);
+    }
+
+    pub fn report(&mut self, line: i32, location: &str, message: String) {
+        eprintln!("[line {line} ] Error {location}: {message}");
+        self.has_error = true;
+    }
 }
-
-
