@@ -4,7 +4,7 @@ use std::io::BufReader;
 use std::path::Path;
 use std::process;
 
-pub fn run(args: Vec<String>) {
+pub fn main(args: Vec<String>) {
     if args.len() > 1 {
         println!("Usage: rlox [script]");
         process::exit(64);
@@ -27,5 +27,26 @@ fn run_file(file_path: &String) -> Result<(), dyn Error> {
 }
 
 fn run_prompt() {
+    let mut input = String::new();
+    loop {
+        print!(">");
+        let line = std::io::stdin().read_line(&mut input);
+        match line {
+            Ok(n) => {
+                println!("{n} bytes read");
+                if input == "\n" {
+                    break;
+                } else {
+                    run(&input);
+                }
+            }
+            Err(e) => {
+                eprintln!("Error: {e}")
+            }
+        }
+    }
+}
+
+fn run(line: &String) {
     todo!()
 }
