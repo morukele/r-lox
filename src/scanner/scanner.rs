@@ -1,4 +1,5 @@
-use crate::{Lox, Object, Token, TokenType};
+use crate::{get_keywords_hashmap, Lox, Object, Token, TokenType};
+use std::collections::HashMap;
 
 pub struct Scanner<'a> {
     source: &'a str,
@@ -7,6 +8,7 @@ pub struct Scanner<'a> {
     current: usize,
     line: usize,
     interpreter: &'a mut Lox,
+    keywords: HashMap<String, TokenType>,
 }
 
 impl<'a> Scanner<'a> {
@@ -18,6 +20,7 @@ impl<'a> Scanner<'a> {
             current: 0,
             line: 0,
             interpreter,
+            keywords: get_keywords_hashmap(),
         }
     }
 
@@ -94,6 +97,8 @@ impl<'a> Scanner<'a> {
             _ => {
                 if self.is_digit(c) {
                     self.number();
+                } else if self.is_alpha(c) {
+                    self.identifier();
                 } else {
                     self.interpreter
                         .error(self.line as i32, "Unexpected character".to_string());
@@ -115,7 +120,7 @@ impl<'a> Scanner<'a> {
                 .error(self.line as i32, "Unterminated string.".to_string());
         }
 
-        // The closing ".
+        // The closing '"'.
         self.advance();
 
         // Trim the surrounding quotes.
@@ -144,10 +149,12 @@ impl<'a> Scanner<'a> {
         self.current >= self.source.len()
     }
 
-    fn advance(&self) -> char {
+    fn advance(&mut self) -> char {
         // There is some guarantee in the code that current with overflow
         // This guarantee is in the is_at_end() function.
-        self.source.chars().nth(self.current + 1).unwrap()
+        self.current += 1;
+        let res = self.source.chars().nth(self.current);
+        res.unwrap_or('\n')
     }
 
     fn add_token(&mut self, token_type: TokenType) {
@@ -199,13 +206,37 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let num = self
+        let num = self.source.get(self.start..self.current).unwrap();
+        println!("{}", &num);
+        // use trim here to remove any space
+        let num = num.trim().parse::<f64>().unwrap();
+
+        self.add_token_with_literal(TokenType::NUMBER, Object::Double(num));
+    }
+    fn identifier(&mut self) {
+        while self.is_alpha_numeric(self.peak()) {
+            self.advance();
+        }
+        let text = self
             .source
             .get(self.start..self.current)
             .unwrap()
-            .parse::<f64>()
-            .unwrap();
+            .to_string();
+        let token_type = self
+            .keywords
+            .get(&text)
+            .copied()
+            .unwrap_or(TokenType::IDENTIFIERS);
 
-        self.add_token_with_literal(TokenType::NUMBER, Object::Double(num));
+        self.add_token(token_type);
+    }
+    fn is_alpha(&self, c: char) -> bool {
+        // this helper functions should ensure that only ASCII characters are used
+        c.is_ascii_lowercase() || c.is_ascii_uppercase() || c == '_'
+    }
+
+    // This should help detect if the character is an alphabet or number
+    fn is_alpha_numeric(&self, c: char) -> bool {
+        self.is_alpha(c) || self.is_digit(c)
     }
 }
