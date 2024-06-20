@@ -4,6 +4,8 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug)]
 pub enum Object {
     Null,
+    String(String),
+    Double(f64),
 }
 
 #[derive(Debug)]
