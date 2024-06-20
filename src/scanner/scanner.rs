@@ -87,7 +87,7 @@ impl<'a> Scanner<'a> {
                     self.add_token(TokenType::SLASH)
                 }
             }
-            ' ' => {}
+            ' ' => {self.advance();}
             '\r' => {}
             '\t' => {}
             '\n' => {

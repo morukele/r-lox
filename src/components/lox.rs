@@ -71,7 +71,7 @@ impl Lox {
 
         // print the tokens to screen
         for token in tokens {
-            println!("{token}")
+            println!("{:?}", token);
         }
     }
 
